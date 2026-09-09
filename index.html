@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Favorite Things</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
     <style>
         * {
             margin: 0;
@@ -67,6 +68,12 @@
             height: 8px;
             border-radius: 50%;
             background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
         
         .data-count {
@@ -189,12 +196,6 @@
         .btn-secondary:active {
             transform: scale(0.98);
             opacity: 0.8;
-        }
-        
-        .btn-small {
-            flex: none;
-            padding: 8px 12px;
-            font-size: 12px;
         }
         
         .filter-group {
@@ -357,10 +358,6 @@
             line-height: 1.6;
         }
         
-        .info-box strong {
-            color: #667eea;
-        }
-        
         #editModal {
             animation: fadeIn 0.2s ease-out;
         }
@@ -398,22 +395,21 @@
             <div class="data-status">
                 <span class="status-item">
                     <span class="status-dot"></span>
-                    <span>Items:</span>
-                    <span class="data-count" id="itemCount">0</span>
+                    <span>Cloud Sync Active</span>
                 </span>
-                <span id="lastSaved" style="font-size: 12px; opacity: 0.8;">Ready</span>
+                <span>Items: <span class="data-count" id="itemCount">0</span></span>
             </div>
         </div>
         
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('add')">➕ Add</button>
             <button class="tab-btn" onclick="switchTab('view')">📋 View</button>
-            <button class="tab-btn" onclick="switchTab('backup')">💾 Backup</button>
+            <button class="tab-btn" onclick="switchTab('backup')">⬇️ Export</button>
         </div>
         
         <!-- ADD TAB -->
         <div id="add" class="tab-content active">
-            <div class="success-message" id="successMessage">✓ Saved successfully!</div>
+            <div class="success-message" id="successMessage">✓ Saved to cloud!</div>
             
             <form id="entryForm">
                 <div class="form-group">
@@ -439,7 +435,7 @@
                 </div>
                 
                 <div class="button-group">
-                    <button type="submit" class="btn-primary">Save</button>
+                    <button type="submit" class="btn-primary">Save to Cloud</button>
                     <button type="reset" class="btn-secondary">Clear</button>
                 </div>
             </form>
@@ -466,31 +462,20 @@
         
         <!-- BACKUP TAB -->
         <div id="backup" class="tab-content">
-            <h2 style="margin-bottom: 20px; color: #333;">Backup & Restore</h2>
+            <h2 style="margin-bottom: 20px; color: #333;">Export Data</h2>
             
             <div class="info-box">
-                <strong>✓ Data is being saved automatically</strong> using IndexedDB, which works reliably with files opened from the Files app. Your data persists between sessions.
+                ☁️ <strong>Your data is automatically synced to the cloud</strong> and accessible from all your devices in real-time!
             </div>
             
-            <div class="button-group" style="margin-bottom: 30px;">
-                <button class="btn-primary" onclick="exportData()">⬇️ Download Backup</button>
-            </div>
+            <button class="btn-primary" onclick="exportData()" style="width: 100%; margin-bottom: 20px;">⬇️ Download Backup</button>
             
             <h3 style="margin-bottom: 16px; color: #333;">Restore from Backup</h3>
             <div class="form-group" style="margin-bottom: 15px;">
                 <label for="importFile">Select a backup file:</label>
                 <input type="file" id="importFile" accept=".json">
             </div>
-            <button class="btn-primary" onclick="importData()" style="width: 100%; margin-bottom: 30px;">⬆️ Restore Data</button>
-            
-            <button class="btn-secondary btn-small" onclick="clearAllData()" style="width: 100%;">🗑️ Clear All Data</button>
-            
-            <div style="background: #f9f9f9; border-radius: 8px; padding: 16px; margin-top: 20px; font-size: 13px; color: #666; line-height: 1.6;">
-                <strong>How it works:</strong>
-                <p style="margin-top: 8px;">• Your data is automatically saved to the device using IndexedDB</p>
-                <p>• Download backups regularly to keep copies in your Files app</p>
-                <p>• If you need to restore, upload a backup JSON file</p>
-            </div>
+            <button class="btn-primary" onclick="importData()" style="width: 100%;">⬆️ Restore Data</button>
         </div>
         
         <!-- EDIT MODAL -->
@@ -530,111 +515,19 @@
     </div>
     
     <script>
-        const DB_NAME = 'FavoriteThingsDB';
-        const STORE_NAME = 'items';
-        const CATEGORIES = ['Restaurants', 'Bars', 'Movies', 'TV', 'Events'];
+        // Supabase credentials
+        const SUPABASE_URL = 'https://bugkxpickvpzqmklgegp.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1Z2t4cGlja3ZwenFta2xnZWdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NzA0MDAsImV4cCI6MjEwNDU0NjQwMH0.eDQ7ukCG_XEpdAYa84ZFPNuu9sV_s9FwmwDJUGwKW1Q';
         
-        let db;
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        const CATEGORIES = ['Restaurants', 'Bars', 'Movies', 'TV', 'Events'];
         let currentFilter = 'All';
         let currentSearchTerm = '';
         let editingItemId = null;
         
-        // Initialize IndexedDB
-        function initDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, 1);
-                
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => {
-                    db = request.result;
-                    resolve(db);
-                };
-                
-                request.onupgradeneeded = (event) => {
-                    const upgradeDB = event.target.result;
-                    if (!upgradeDB.objectStoreNames.contains(STORE_NAME)) {
-                        upgradeDB.createObjectStore(STORE_NAME, { keyPath: 'id' });
-                    }
-                };
-            });
-        }
-        
-        // Load all items from IndexedDB
-        function loadAllItems() {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(STORE_NAME, 'readonly');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.getAll();
-                
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => resolve(request.result);
-            });
-        }
-        
-        // Add/update item in IndexedDB
-        function saveItem(item) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(STORE_NAME, 'readwrite');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.put(item);
-                
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => {
-                    updateItemCount();
-                    updateLastSaved();
-                    resolve(request.result);
-                };
-            });
-        }
-        
-        // Delete item from IndexedDB
-        function deleteItemFromDB(id) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(STORE_NAME, 'readwrite');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.delete(id);
-                
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => {
-                    updateItemCount();
-                    updateLastSaved();
-                    resolve();
-                };
-            });
-        }
-        
-        // Clear all items
-        function clearAllItemsFromDB() {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(STORE_NAME, 'readwrite');
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.clear();
-                
-                request.onerror = () => reject(request.error);
-                request.onsuccess = () => {
-                    updateItemCount();
-                    updateLastSaved();
-                    resolve();
-                };
-            });
-        }
-        
-        function updateItemCount() {
-            loadAllItems().then(items => {
-                document.getElementById('itemCount').textContent = items.length;
-            });
-        }
-        
-        function updateLastSaved() {
-            const now = new Date();
-            const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            document.getElementById('lastSaved').textContent = `Saved at ${time}`;
-        }
-        
-        // Initialize on page load
+        // Initialize
         window.addEventListener('DOMContentLoaded', async function() {
-            await initDB();
-            
             document.getElementById('entryForm').addEventListener('submit', saveEntry);
             document.getElementById('editForm').addEventListener('submit', updateEntry);
             document.getElementById('editModal').addEventListener('click', function(e) {
@@ -642,101 +535,126 @@
             });
             
             await initializeFilters();
-            updateItemCount();
-            updateLastSaved();
+            await updateItemCount();
         });
         
         async function saveEntry(e) {
             e.preventDefault();
             
-            const entry = {
-                id: Date.now(),
-                title: document.getElementById('title').value,
-                category: document.getElementById('category').value,
-                notes: document.getElementById('notes').value,
-                dateAdded: new Date().toLocaleDateString()
-            };
-            
-            await saveItem(entry);
-            
-            // Show success message
-            const msg = document.getElementById('successMessage');
-            msg.classList.add('show');
-            setTimeout(() => msg.classList.remove('show'), 2000);
-            
-            document.getElementById('entryForm').reset();
+            try {
+                const { data, error } = await supabase
+                    .from('favorites')
+                    .insert({
+                        title: document.getElementById('title').value,
+                        category: document.getElementById('category').value,
+                        notes: document.getElementById('notes').value,
+                        dateAdded: new Date().toLocaleDateString()
+                    });
+                
+                if (error) throw error;
+                
+                // Show success
+                const msg = document.getElementById('successMessage');
+                msg.classList.add('show');
+                setTimeout(() => msg.classList.remove('show'), 2000);
+                
+                document.getElementById('entryForm').reset();
+                await updateItemCount();
+            } catch (err) {
+                alert('Error saving: ' + err.message);
+            }
         }
         
         async function displayItems() {
-            const items = await loadAllItems();
-            const container = document.getElementById('itemsContainer');
-            const statsDiv = document.getElementById('stats');
-            
-            // Update stats
-            const stats = CATEGORIES.map(cat => {
-                const count = items.filter(item => item.category === cat).length;
-                return `${cat}: ${count}`;
-            }).join(' • ');
-            statsDiv.textContent = stats || 'No items yet';
-            
-            // Filter items by category
-            let filtered = currentFilter === 'All' 
-                ? [...items]
-                : items.filter(item => item.category === currentFilter);
-            
-            // Filter by search term
-            if (currentSearchTerm.trim()) {
-                const searchLower = currentSearchTerm.toLowerCase();
-                filtered = filtered.filter(item => 
-                    item.title.toLowerCase().includes(searchLower) ||
-                    item.notes.toLowerCase().includes(searchLower)
-                );
-            }
-            
-            // Sort by category then title
-            filtered.sort((a, b) => {
-                if (a.category !== b.category) {
-                    return CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category);
-                }
-                return a.title.localeCompare(b.title);
-            });
-            
-            if (filtered.length === 0) {
-                let emptyMsg = 'No items yet.';
+            try {
+                const { data, error } = await supabase
+                    .from('favorites')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                const container = document.getElementById('itemsContainer');
+                const statsDiv = document.getElementById('stats');
+                
+                // Update stats
+                const stats = CATEGORIES.map(cat => {
+                    const count = data.filter(item => item.category === cat).length;
+                    return `${cat}: ${count}`;
+                }).join(' • ');
+                statsDiv.textContent = stats || 'No items yet';
+                
+                // Filter by category
+                let filtered = currentFilter === 'All' 
+                    ? [...data]
+                    : data.filter(item => item.category === currentFilter);
+                
+                // Filter by search
                 if (currentSearchTerm.trim()) {
-                    emptyMsg = 'No results found.';
-                } else if (currentFilter !== 'All') {
-                    emptyMsg = 'No items in this category.';
+                    const searchLower = currentSearchTerm.toLowerCase();
+                    filtered = filtered.filter(item => 
+                        item.title.toLowerCase().includes(searchLower) ||
+                        item.notes.toLowerCase().includes(searchLower)
+                    );
                 }
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📭</div>
-                        <p>${emptyMsg}</p>
+                
+                // Sort
+                filtered.sort((a, b) => {
+                    if (a.category !== b.category) {
+                        return CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category);
+                    }
+                    return a.title.localeCompare(b.title);
+                });
+                
+                if (filtered.length === 0) {
+                    let emptyMsg = 'No items yet.';
+                    if (currentSearchTerm.trim()) {
+                        emptyMsg = 'No results found.';
+                    } else if (currentFilter !== 'All') {
+                        emptyMsg = 'No items in this category.';
+                    }
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <p>${emptyMsg}</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = filtered.map(item => `
+                    <div class="item">
+                        <div class="item-content">
+                            <div class="item-title">${escapeHtml(item.title)}</div>
+                            <div class="item-category">${item.category}</div>
+                            ${item.notes ? `<div class="item-notes">${escapeHtml(item.notes)}</div>` : ''}
+                            <div style="font-size: 12px; color: #999; margin-top: 8px;">${item.dateAdded}</div>
+                        </div>
+                        <div class="item-actions">
+                            <button class="item-action-btn btn-edit" onclick="openEditModal(${item.id})">Edit</button>
+                            <button class="item-action-btn btn-delete" onclick="deleteItem(${item.id})">Delete</button>
+                        </div>
                     </div>
-                `;
-                return;
+                `).join('');
+            } catch (err) {
+                console.error('Error loading items:', err);
             }
-            
-            container.innerHTML = filtered.map(item => `
-                <div class="item">
-                    <div class="item-content">
-                        <div class="item-title">${escapeHtml(item.title)}</div>
-                        <div class="item-category">${item.category}</div>
-                        ${item.notes ? `<div class="item-notes">${escapeHtml(item.notes)}</div>` : ''}
-                        <div style="font-size: 12px; color: #999; margin-top: 8px;">${item.dateAdded}</div>
-                    </div>
-                    <div class="item-actions">
-                        <button class="item-action-btn btn-edit" onclick="openEditModal(${item.id})">Edit</button>
-                        <button class="item-action-btn btn-delete" onclick="deleteItem(${item.id})">Delete</button>
-                    </div>
-                </div>
-            `).join('');
         }
         
         async function deleteItem(id) {
             if (confirm('Delete this item?')) {
-                await deleteItemFromDB(id);
-                displayItems();
+                try {
+                    const { error } = await supabase
+                        .from('favorites')
+                        .delete()
+                        .eq('id', id);
+                    
+                    if (error) throw error;
+                    await displayItems();
+                    await updateItemCount();
+                } catch (err) {
+                    alert('Error deleting: ' + err.message);
+                }
             }
         }
         
@@ -746,16 +664,24 @@
         }
         
         async function openEditModal(id) {
-            const items = await loadAllItems();
-            const item = items.find(i => i.id === id);
-            if (!item) return;
-            
-            editingItemId = id;
-            document.getElementById('editTitle').value = item.title;
-            document.getElementById('editCategory').value = item.category;
-            document.getElementById('editNotes').value = item.notes;
-            
-            document.getElementById('editModal').style.display = 'block';
+            try {
+                const { data, error } = await supabase
+                    .from('favorites')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
+                
+                if (error) throw error;
+                
+                editingItemId = id;
+                document.getElementById('editTitle').value = data.title;
+                document.getElementById('editCategory').value = data.category;
+                document.getElementById('editNotes').value = data.notes;
+                
+                document.getElementById('editModal').style.display = 'block';
+            } catch (err) {
+                alert('Error loading item: ' + err.message);
+            }
         }
         
         function closeEditModal() {
@@ -768,17 +694,22 @@
             e.preventDefault();
             if (!editingItemId) return;
             
-            const items = await loadAllItems();
-            const item = items.find(i => i.id === editingItemId);
-            if (!item) return;
-            
-            item.title = document.getElementById('editTitle').value;
-            item.category = document.getElementById('editCategory').value;
-            item.notes = document.getElementById('editNotes').value;
-            
-            await saveItem(item);
-            closeEditModal();
-            displayItems();
+            try {
+                const { error } = await supabase
+                    .from('favorites')
+                    .update({
+                        title: document.getElementById('editTitle').value,
+                        category: document.getElementById('editCategory').value,
+                        notes: document.getElementById('editNotes').value
+                    })
+                    .eq('id', editingItemId);
+                
+                if (error) throw error;
+                closeEditModal();
+                await displayItems();
+            } catch (err) {
+                alert('Error updating: ' + err.message);
+            }
         }
         
         async function initializeFilters() {
@@ -816,21 +747,43 @@
             }
         }
         
-        async function exportData() {
-            const items = await loadAllItems();
-            if (items.length === 0) {
-                alert('No data to export!');
-                return;
+        async function updateItemCount() {
+            try {
+                const { count, error } = await supabase
+                    .from('favorites')
+                    .select('*', { count: 'exact', head: true });
+                
+                if (error) throw error;
+                document.getElementById('itemCount').textContent = count || 0;
+            } catch (err) {
+                console.error('Error counting items:', err);
             }
-            
-            const dataStr = JSON.stringify(items, null, 2);
-            const dataBlob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(dataBlob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `favorite-things-backup-${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-            URL.revokeObjectURL(url);
+        }
+        
+        async function exportData() {
+            try {
+                const { data, error } = await supabase
+                    .from('favorites')
+                    .select('*');
+                
+                if (error) throw error;
+                
+                if (data.length === 0) {
+                    alert('No data to export!');
+                    return;
+                }
+                
+                const dataStr = JSON.stringify(data, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `favorite-things-backup-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                alert('Error exporting: ' + err.message);
+            }
         }
         
         async function importData() {
@@ -852,30 +805,30 @@
                         return;
                     }
                     
-                    for (const item of imported) {
-                        await saveItem(item);
-                    }
+                    // Insert imported items
+                    const { error } = await supabase
+                        .from('favorites')
+                        .insert(imported.map(item => ({
+                            title: item.title,
+                            category: item.category,
+                            notes: item.notes,
+                            dateAdded: item.dateAdded
+                        })));
+                    
+                    if (error) throw error;
                     
                     fileInput.value = '';
                     alert(`✓ Imported ${imported.length} item${imported.length !== 1 ? 's' : ''}!`);
                     
                     switchTab('view');
-                    displayItems();
+                    await displayItems();
+                    await updateItemCount();
                 } catch (err) {
-                    alert('Error reading file: ' + err.message);
+                    alert('Error importing: ' + err.message);
                 }
             };
             
             reader.readAsText(file);
-        }
-        
-        async function clearAllData() {
-            if (confirm('Delete ALL items? This cannot be undone.')) {
-                await clearAllItemsFromDB();
-                currentFilter = 'All';
-                displayItems();
-                await initializeFilters();
-            }
         }
         
         function escapeHtml(text) {
