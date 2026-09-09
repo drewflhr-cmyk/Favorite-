@@ -519,7 +519,7 @@
         const SUPABASE_URL = 'https://bugkxpickvpzqmklgegp.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1Z2t4cGlja3ZwenFta2xnZWdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5NzA0MDAsImV4cCI6MjEwNDU0NjQwMH0.eDQ7ukCG_XEpdAYa84ZFPNuu9sV_s9FwmwDJUGwKW1Q';
         
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         const CATEGORIES = ['Restaurants', 'Bars', 'Movies', 'TV', 'Events'];
         let currentFilter = 'All';
@@ -542,7 +542,7 @@
             e.preventDefault();
             
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('favorites')
                     .insert({
                         title: document.getElementById('title').value,
@@ -567,7 +567,7 @@
         
         async function displayItems() {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('favorites')
                     .select('*')
                     .order('created_at', { ascending: false });
@@ -644,7 +644,7 @@
         async function deleteItem(id) {
             if (confirm('Delete this item?')) {
                 try {
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('favorites')
                         .delete()
                         .eq('id', id);
@@ -665,7 +665,7 @@
         
         async function openEditModal(id) {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('favorites')
                     .select('*')
                     .eq('id', id)
@@ -695,7 +695,7 @@
             if (!editingItemId) return;
             
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('favorites')
                     .update({
                         title: document.getElementById('editTitle').value,
@@ -749,7 +749,7 @@
         
         async function updateItemCount() {
             try {
-                const { count, error } = await supabase
+                const { count, error } = await supabaseClient
                     .from('favorites')
                     .select('*', { count: 'exact', head: true });
                 
@@ -762,7 +762,7 @@
         
         async function exportData() {
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('favorites')
                     .select('*');
                 
@@ -806,7 +806,7 @@
                     }
                     
                     // Insert imported items
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('favorites')
                         .insert(imported.map(item => ({
                             title: item.title,
