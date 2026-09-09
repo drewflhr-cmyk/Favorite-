@@ -422,7 +422,7 @@
                     <select id="category" required>
                         <option value="">-- Select a Category --</option>
                         <option value="Restaurants">🍽️ Restaurants</option>
-                        <option value="Bars">🍹 Bars</option>
+                        <option value="Music">🍹 Bars</option>
                         <option value="Movies">🎬 Movies</option>
                         <option value="TV">📺 TV Shows</option>
                         <option value="Events">🎉 Events</option>
@@ -495,7 +495,7 @@
                         <select id="editCategory" required>
                             <option value="">-- Select a Category --</option>
                             <option value="Restaurants">🍽️ Restaurants</option>
-                            <option value="Bars">🍹 Bars</option>
+                            <option value="Music">🍹 Bars</option>
                             <option value="Movies">🎬 Movies</option>
                             <option value="TV">📺 TV Shows</option>
                             <option value="Events">🎉 Events</option>
@@ -525,7 +525,7 @@
         
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        const CATEGORIES = ['Restaurants', 'Bars', 'Movies', 'TV', 'Events', 'Books', 'Recommendations'];
+        const CATEGORIES = ['Restaurants', 'Music', 'Movies', 'TV', 'Events', 'Books', 'Recommendations'];
         let currentFilter = 'All';
         let currentSearchTerm = '';
         let editingItemId = null;
