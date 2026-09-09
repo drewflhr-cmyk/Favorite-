@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Favorite Things</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+            padding-top: 20px;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        
+        .data-status {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+        }
+        
+        .data-count {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            background: white;
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 18px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        input[type="text"],
+        select,
+        textarea,
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            flex: 1;
+            min-width: 120px;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:active {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-secondary:active {
+            transform: scale(0.98);
+            opacity: 0.8;
+        }
+        
+        .btn-small {
+            flex: none;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+        
+        .filter-group {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 8px 16px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: #666;
+        }
+        
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .items-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .item {
+            background: #f9f9f9;
+            border-left: 4px solid #667eea;
+            padding: 16px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .item-content {
+            flex: 1;
+        }
+        
+        .item-title {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 4px;
+            font-size: 16px;
+        }
+        
+        .item-category {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .item-notes {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .item-actions {
+            display: flex;
+            gap: 6px;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        
+        .item-action-btn {
+            padding: 6px 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        .btn-edit {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-delete {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        .item-action-btn:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+        }
+        
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .success-message.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .stats {
+            background: #f0f0f0;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #667eea;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .info-box strong {
+            color: #667eea;
+        }
+        
+        #editModal {
+            animation: fadeIn 0.2s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        
+        #editModal > div {
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⭐ Favorite Things</h1>
+            <p>Keep track of your favorite places and moments</p>
+            <div class="data-status">
+                <span class="status-item">
+                    <span class="status-dot"></span>
+                    <span>Items:</span>
+                    <span class="data-count" id="itemCount">0</span>
+                </span>
+                <span id="lastSaved" style="font-size: 12px; opacity: 0.8;">Ready</span>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('add')">➕ Add</button>
+            <button class="tab-btn" onclick="switchTab('view')">📋 View</button>
+            <button class="tab-btn" onclick="switchTab('backup')">💾 Backup</button>
+        </div>
+        
+        <!-- ADD TAB -->
+        <div id="add" class="tab-content active">
+            <div class="success-message" id="successMessage">✓ Saved successfully!</div>
+            
+            <form id="entryForm">
+                <div class="form-group">
+                    <label for="title">Title *</label>
+                    <input type="text" id="title" placeholder="e.g., The Best Pasta Place" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">Category *</label>
+                    <select id="category" required>
+                        <option value="">-- Select a Category --</option>
+                        <option value="Restaurants">🍽️ Restaurants</option>
+                        <option value="Bars">🍹 Bars</option>
+                        <option value="Movies">🎬 Movies</option>
+                        <option value="TV">📺 TV Shows</option>
+                        <option value="Events">🎉 Events</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notes">Notes</label>
+                    <textarea id="notes" placeholder="Add any notes or memories about this..."></textarea>
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">Save</button>
+                    <button type="reset" class="btn-secondary">Clear</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- VIEW TAB -->
+        <div id="view" class="tab-content">
+            <div class="stats" id="stats"></div>
+            
+            <div class="form-group" style="margin-bottom: 15px;">
+                <input type="text" id="searchBox" placeholder="🔍 Search by title or notes..." 
+                       style="width: 100%;" oninput="filterAndSearch()">
+            </div>
+            
+            <div class="filter-group" id="filterGroup"></div>
+            
+            <div class="items-container" id="itemsContainer">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <p>No items yet. Add your first favorite thing!</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- BACKUP TAB -->
+        <div id="backup" class="tab-content">
+            <h2 style="margin-bottom: 20px; color: #333;">Backup & Restore</h2>
+            
+            <div class="info-box">
+                <strong>✓ Data is being saved automatically</strong> using IndexedDB, which works reliably with files opened from the Files app. Your data persists between sessions.
+            </div>
+            
+            <div class="button-group" style="margin-bottom: 30px;">
+                <button class="btn-primary" onclick="exportData()">⬇️ Download Backup</button>
+            </div>
+            
+            <h3 style="margin-bottom: 16px; color: #333;">Restore from Backup</h3>
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="importFile">Select a backup file:</label>
+                <input type="file" id="importFile" accept=".json">
+            </div>
+            <button class="btn-primary" onclick="importData()" style="width: 100%; margin-bottom: 30px;">⬆️ Restore Data</button>
+            
+            <button class="btn-secondary btn-small" onclick="clearAllData()" style="width: 100%;">🗑️ Clear All Data</button>
+            
+            <div style="background: #f9f9f9; border-radius: 8px; padding: 16px; margin-top: 20px; font-size: 13px; color: #666; line-height: 1.6;">
+                <strong>How it works:</strong>
+                <p style="margin-top: 8px;">• Your data is automatically saved to the device using IndexedDB</p>
+                <p>• Download backups regularly to keep copies in your Files app</p>
+                <p>• If you need to restore, upload a backup JSON file</p>
+            </div>
+        </div>
+        
+        <!-- EDIT MODAL -->
+        <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; padding: 20px;">
+            <div style="background: white; border-radius: 12px; padding: 25px; max-width: 600px; margin: 50px auto; max-height: 80vh; overflow-y: auto;">
+                <h2 style="margin-bottom: 20px;">Edit Item</h2>
+                <form id="editForm" style="margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label for="editTitle">Title *</label>
+                        <input type="text" id="editTitle" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editCategory">Category *</label>
+                        <select id="editCategory" required>
+                            <option value="">-- Select a Category --</option>
+                            <option value="Restaurants">🍽️ Restaurants</option>
+                            <option value="Bars">🍹 Bars</option>
+                            <option value="Movies">🎬 Movies</option>
+                            <option value="TV">📺 TV Shows</option>
+                            <option value="Events">🎉 Events</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editNotes">Notes</label>
+                        <textarea id="editNotes"></textarea>
+                    </div>
+                    
+                    <div class="button-group">
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                        <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const DB_NAME = 'FavoriteThingsDB';
+        const STORE_NAME = 'items';
+        const CATEGORIES = ['Restaurants', 'Bars', 'Movies', 'TV', 'Events'];
+        
+        let db;
+        let currentFilter = 'All';
+        let currentSearchTerm = '';
+        let editingItemId = null;
+        
+        // Initialize IndexedDB
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const upgradeDB = event.target.result;
+                    if (!upgradeDB.objectStoreNames.contains(STORE_NAME)) {
+                        upgradeDB.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+            });
+        }
+        
+        // Load all items from IndexedDB
+        function loadAllItems() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(STORE_NAME, 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.getAll();
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => resolve(request.result);
+            });
+        }
+        
+        // Add/update item in IndexedDB
+        function saveItem(item) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(STORE_NAME, 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.put(item);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    updateItemCount();
+                    updateLastSaved();
+                    resolve(request.result);
+                };
+            });
+        }
+        
+        // Delete item from IndexedDB
+        function deleteItemFromDB(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(STORE_NAME, 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.delete(id);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    updateItemCount();
+                    updateLastSaved();
+                    resolve();
+                };
+            });
+        }
+        
+        // Clear all items
+        function clearAllItemsFromDB() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(STORE_NAME, 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.clear();
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    updateItemCount();
+                    updateLastSaved();
+                    resolve();
+                };
+            });
+        }
+        
+        function updateItemCount() {
+            loadAllItems().then(items => {
+                document.getElementById('itemCount').textContent = items.length;
+            });
+        }
+        
+        function updateLastSaved() {
+            const now = new Date();
+            const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('lastSaved').textContent = `Saved at ${time}`;
+        }
+        
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', async function() {
+            await initDB();
+            
+            document.getElementById('entryForm').addEventListener('submit', saveEntry);
+            document.getElementById('editForm').addEventListener('submit', updateEntry);
+            document.getElementById('editModal').addEventListener('click', function(e) {
+                if (e.target === this) closeEditModal();
+            });
+            
+            await initializeFilters();
+            updateItemCount();
+            updateLastSaved();
+        });
+        
+        async function saveEntry(e) {
+            e.preventDefault();
+            
+            const entry = {
+                id: Date.now(),
+                title: document.getElementById('title').value,
+                category: document.getElementById('category').value,
+                notes: document.getElementById('notes').value,
+                dateAdded: new Date().toLocaleDateString()
+            };
+            
+            await saveItem(entry);
+            
+            // Show success message
+            const msg = document.getElementById('successMessage');
+            msg.classList.add('show');
+            setTimeout(() => msg.classList.remove('show'), 2000);
+            
+            document.getElementById('entryForm').reset();
+        }
+        
+        async function displayItems() {
+            const items = await loadAllItems();
+            const container = document.getElementById('itemsContainer');
+            const statsDiv = document.getElementById('stats');
+            
+            // Update stats
+            const stats = CATEGORIES.map(cat => {
+                const count = items.filter(item => item.category === cat).length;
+                return `${cat}: ${count}`;
+            }).join(' • ');
+            statsDiv.textContent = stats || 'No items yet';
+            
+            // Filter items by category
+            let filtered = currentFilter === 'All' 
+                ? [...items]
+                : items.filter(item => item.category === currentFilter);
+            
+            // Filter by search term
+            if (currentSearchTerm.trim()) {
+                const searchLower = currentSearchTerm.toLowerCase();
+                filtered = filtered.filter(item => 
+                    item.title.toLowerCase().includes(searchLower) ||
+                    item.notes.toLowerCase().includes(searchLower)
+                );
+            }
+            
+            // Sort by category then title
+            filtered.sort((a, b) => {
+                if (a.category !== b.category) {
+                    return CATEGORIES.indexOf(a.category) - CATEGORIES.indexOf(b.category);
+                }
+                return a.title.localeCompare(b.title);
+            });
+            
+            if (filtered.length === 0) {
+                let emptyMsg = 'No items yet.';
+                if (currentSearchTerm.trim()) {
+                    emptyMsg = 'No results found.';
+                } else if (currentFilter !== 'All') {
+                    emptyMsg = 'No items in this category.';
+                }
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>${emptyMsg}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = filtered.map(item => `
+                <div class="item">
+                    <div class="item-content">
+                        <div class="item-title">${escapeHtml(item.title)}</div>
+                        <div class="item-category">${item.category}</div>
+                        ${item.notes ? `<div class="item-notes">${escapeHtml(item.notes)}</div>` : ''}
+                        <div style="font-size: 12px; color: #999; margin-top: 8px;">${item.dateAdded}</div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="item-action-btn btn-edit" onclick="openEditModal(${item.id})">Edit</button>
+                        <button class="item-action-btn btn-delete" onclick="deleteItem(${item.id})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function deleteItem(id) {
+            if (confirm('Delete this item?')) {
+                await deleteItemFromDB(id);
+                displayItems();
+            }
+        }
+        
+        function filterAndSearch() {
+            currentSearchTerm = document.getElementById('searchBox').value;
+            displayItems();
+        }
+        
+        async function openEditModal(id) {
+            const items = await loadAllItems();
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+            
+            editingItemId = id;
+            document.getElementById('editTitle').value = item.title;
+            document.getElementById('editCategory').value = item.category;
+            document.getElementById('editNotes').value = item.notes;
+            
+            document.getElementById('editModal').style.display = 'block';
+        }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            editingItemId = null;
+            document.getElementById('editForm').reset();
+        }
+        
+        async function updateEntry(e) {
+            e.preventDefault();
+            if (!editingItemId) return;
+            
+            const items = await loadAllItems();
+            const item = items.find(i => i.id === editingItemId);
+            if (!item) return;
+            
+            item.title = document.getElementById('editTitle').value;
+            item.category = document.getElementById('editCategory').value;
+            item.notes = document.getElementById('editNotes').value;
+            
+            await saveItem(item);
+            closeEditModal();
+            displayItems();
+        }
+        
+        async function initializeFilters() {
+            const filterGroup = document.getElementById('filterGroup');
+            filterGroup.innerHTML = '<button class="filter-btn active" onclick="setFilter(\'All\')">All</button>';
+            
+            CATEGORIES.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn';
+                btn.textContent = cat;
+                btn.onclick = () => setFilter(cat);
+                filterGroup.appendChild(btn);
+            });
+            
+            await displayItems();
+        }
+        
+        function setFilter(category) {
+            currentFilter = category;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent === category);
+            });
+            displayItems();
+        }
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tabName === 'view') {
+                displayItems();
+            }
+        }
+        
+        async function exportData() {
+            const items = await loadAllItems();
+            if (items.length === 0) {
+                alert('No data to export!');
+                return;
+            }
+            
+            const dataStr = JSON.stringify(items, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `favorite-things-backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        async function importData() {
+            const fileInput = document.getElementById('importFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a file first');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    
+                    if (!Array.isArray(imported)) {
+                        alert('Invalid file format');
+                        return;
+                    }
+                    
+                    for (const item of imported) {
+                        await saveItem(item);
+                    }
+                    
+                    fileInput.value = '';
+                    alert(`✓ Imported ${imported.length} item${imported.length !== 1 ? 's' : ''}!`);
+                    
+                    switchTab('view');
+                    displayItems();
+                } catch (err) {
+                    alert('Error reading file: ' + err.message);
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        async function clearAllData() {
+            if (confirm('Delete ALL items? This cannot be undone.')) {
+                await clearAllItemsFromDB();
+                currentFilter = 'All';
+                displayItems();
+                await initializeFilters();
+            }
+        }
+        
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+    </script>
+</body>
+</html>
